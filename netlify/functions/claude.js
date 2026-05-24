@@ -1,4 +1,5 @@
 exports.handler = async (event) => {
+  // Set longer timeout for narrative generation
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -12,15 +13,13 @@ exports.handler = async (event) => {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-       model: "claude-sonnet-4-5",
+        model: "claude-sonnet-4-5",
         max_tokens: 1200,
         system,
         messages,
       }),
     });
     const data = await response.json();
-
-    // If Anthropic returned an error, pass it back clearly
     if (data.type === "error") {
       return {
         statusCode: 400,
@@ -28,8 +27,6 @@ exports.handler = async (event) => {
         body: JSON.stringify({ error: data.error?.message || "Anthropic API error" }),
       };
     }
-
-    // Make sure content exists before returning
     if (!data.content || !Array.isArray(data.content)) {
       return {
         statusCode: 500,
@@ -37,7 +34,6 @@ exports.handler = async (event) => {
         body: JSON.stringify({ error: "Unexpected response format", raw: data }),
       };
     }
-
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
