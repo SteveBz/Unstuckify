@@ -19,12 +19,35 @@ exports.handler = async (event) => {
       }),
     });
     const data = await response.json();
+
+    // If Anthropic returned an error, pass it back clearly
+    if (data.type === "error") {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: data.error?.message || "Anthropic API error" }),
+      };
+    }
+
+    // Make sure content exists before returning
+    if (!data.content || !Array.isArray(data.content)) {
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Unexpected response format", raw: data }),
+      };
+    }
+
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     };
-  } catch(error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: error.message }),
+    };
   }
 };
