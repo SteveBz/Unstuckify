@@ -166,15 +166,26 @@ export default function App() {
     } catch(e) {}
   }
 
-  async function callClaude(messages, system) {
-    const res = await fetch("/.netlify/functions/claude", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, system }),
-    });
-    const data = await res.json();
-    return data.content.map(b => b.text || "").join("");
+async function callClaude(messages, system) {
+  const res = await fetch("/.netlify/functions/claude", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, system }),
+  });
+  const data = await res.json();
+  
+  // Handle error responses
+  if (data.error) {
+    throw new Error(data.error);
   }
+  
+  // Safety check before reading content
+  if (!data.content || !Array.isArray(data.content)) {
+    throw new Error("Unexpected response: " + JSON.stringify(data));
+  }
+  
+  return data.content.map(b => b.text || "").join("");
+}
 
   async function handleDecompose() {
     if (!challenge.title.trim() || !challenge.description.trim()) return;
